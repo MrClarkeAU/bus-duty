@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bus Duty – Sacred Heart College</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 16px;
+    color: #1a1a2e;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #7b2d26, #a3362c);
+    color: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(123, 45, 38, 0.3);
+  }
+
+  .header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .counter {
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    color: #444;
+    flex: 1;
+  }
+
+  .counter span {
+    color: #7b2d26;
+    font-size: 1.3rem;
+  }
+
+  .sync-indicator {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #999;
+  }
+
+  .sync-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s ease;
+  }
+
+  .sync-dot.connected { background: #4caf50; }
+  .sync-dot.disconnected { background: #f44336; }
+  .sync-dot.connecting { background: #ff9800; animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .bus-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bus-item {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .bus-item:active {
+    transform: scale(0.98);
+  }
+
+  .bus-item.checked {
+    background: #e8f5e9;
+    border-color: #4caf50;
+  }
+
+  .bus-item.checked .route-number {
+    background: #4caf50;
+  }
+
+  .bus-item.checked .destination {
+    color: #666;
+    text-decoration: line-through;
+    text-decoration-color: #999;
+  }
+
+  .bus-item.checked .arrival-time {
+    display: block;
+  }
+
+  .checkbox-area {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 2.5px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+  }
+
+  .bus-item.checked .checkbox-area {
+    background: #4caf50;
+    border-color: #4caf50;
+  }
+
+  .checkbox-area svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .bus-item.checked .checkbox-area svg {
+    opacity: 1;
+  }
+
+  .route-number {
+    background: #7b2d26;
+    color: white;
+    font-weight: 800;
+    font-size: 1.15rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    min-width: 52px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: background 0.25s ease;
+  }
+
+  .dest-wrapper {
+    flex: 1;
+  }
+
+  .destination {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #333;
+    line-height: 1.3;
+    transition: all 0.25s ease;
+  }
+
+  .arrival-time {
+    display: none;
+    font-size: 0.75rem;
+    color: #4caf50;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+
+  .bus-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-reset {
+    background: #e8e8e8;
+    color: #555;
+  }
+
+  .all-done {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4caf50;
+    display: none;
+  }
+
+  .all-done.visible { display: block; }
+
+  .timestamp {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 12px;
+  }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+  }
+
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #7b2d26;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Connecting...</div>
+</div>
+
+<div class="header">
+  <h1>🚌 Bus Duty Checklist</h1>
+  <div class="subtitle">Sacred Heart College — After School (Live)</div>
+</div>
+
+<div class="status-bar">
+  <div class="counter">
+    <span id="arrivedCount">0</span> of <span id="totalCount">7</span> arrived
+  </div>
+  <div class="sync-indicator">
+    <div class="sync-dot connecting" id="syncDot"></div>
+    <span id="syncText">Connecting</span>
+  </div>
+</div>
+
+<div class="bus-list" id="busList"></div>
+
+<div class="all-done" id="allDone">✅ All buses arrived!</div>
+
+<div class="actions">
+  <button class="btn btn-reset" onclick="resetAll()">Reset All</button>
+</div>
+
+<div class="timestamp" id="timestamp"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// =============================================================
+// FIREBASE CONFIG — Replace the placeholder values below
+// with your own Firebase project credentials.
+// See the setup guide for instructions.
+// =============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyA8lR2WjQXVHMrQHIDnJlfTYavqZ-_aybU",
+  authDomain: "shc-bus-duty.firebaseapp.com",
+  databaseURL: "https://shc-bus-duty-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "shc-bus-duty",
+  storageBucket: "shc-bus-duty.firebasestorage.app",
+  messagingSenderId: "500819761964",
+  appId: "1:500819761964:web:9d5637078035c95924ea89"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const busRef = db.ref('bus-duty');
+
+// =============================================================
+// BUS DATA
+// =============================================================
+const buses = [
+  { id: "bus_423_warwick_stirling", route: "423", dest: "Warwick / Stirling Stn (Regular)" },
+  { id: "bus_441_warwick",         route: "441", dest: "Warwick Stn" },
+  { id: "bus_441_whitfords",       route: "441", dest: "Whitfords Stn" },
+  { id: "bus_442_warwick",         route: "442", dest: "Warwick Stn" },
+  { id: "bus_442_whitfords",       route: "442", dest: "Whitfords Stn" },
+  { id: "bus_444_whitfords",       route: "444", dest: "Whitfords Stn" },
+  { id: "bus_783_warwick",         route: "783", dest: "Warwick Stn (Special)" }
+];
+
+let state = {};
+
+// =============================================================
+// AUTO-RESET: Get today's date in Perth time (AWST = UTC+8)
+// =============================================================
+function getTodayPerth() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Perth' });
+}
+
+// =============================================================
+// FIREBASE LISTENERS
+// =============================================================
+
+// Connection status
+db.ref('.info/connected').on('value', (snap) => {
+  const isConnected = snap.val() === true;
+  const dot = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  if (isConnected) {
+    dot.className = 'sync-dot connected';
+    text.textContent = 'Live';
+  } else {
+    dot.className = 'sync-dot disconnected';
+    text.textContent = 'Offline';
+  }
+});
+
+// Listen for data changes — this is where the live sync happens.
+// When ANY teacher ticks a bus, every other open page updates instantly.
+busRef.on('value', (snapshot) => {
+  const data = snapshot.val() || {};
+
+  // Auto-reset: if stored date doesn't match today (Perth time), clear everything
+  if (data.date !== getTodayPerth()) {
+    const freshState = { date: getTodayPerth() };
+    buses.forEach(b => {
+      freshState[b.id] = { arrived: false, time: null };
+    });
+    busRef.set(freshState);
+    return; // The set() will re-trigger this listener with clean data
+  }
+
+  state = data;
+  render();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+});
+
+// =============================================================
+// TOGGLE & RESET
+// =============================================================
+function toggle(busId) {
+  const current = state[busId] || { arrived: false, time: null };
+  const nowArrived = !current.arrived;
+
+  if (nowArrived && navigator.vibrate) navigator.vibrate(30);
+
+  busRef.child(busId).set({
+    arrived: nowArrived,
+    time: nowArrived ? new Date().toLocaleTimeString('en-AU', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Perth'
+    }) : null
+  });
+}
+
+function resetAll() {
+  const hasAny = buses.some(b => state[b.id]?.arrived);
+  if (!hasAny) return;
+
+  if (confirm('Reset all buses? This will clear everyone\'s view.')) {
+    const freshState = { date: getTodayPerth() };
+    buses.forEach(b => {
+      freshState[b.id] = { arrived: false, time: null };
+    });
+    busRef.set(freshState);
+  }
+}
+
+// =============================================================
+// RENDER
+// =============================================================
+function render() {
+  const list = document.getElementById('busList');
+  list.innerHTML = '';
+
+  let arrivedCount = 0;
+
+  buses.forEach((bus) => {
+    const busState = state[bus.id] || { arrived: false, time: null };
+    if (busState.arrived) arrivedCount++;
+
+    const item = document.createElement('div');
+    item.className = 'bus-item' + (busState.arrived ? ' checked' : '');
+    item.onclick = () => toggle(bus.id);
+    item.innerHTML = `
+      <div class="checkbox-area">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="bus-info">
+        <div class="route-number">${bus.route}</div>
+        <div class="dest-wrapper">
+          <div class="destination">${bus.dest}</div>
+          <div class="arrival-time">${busState.time ? 'Arrived ' + busState.time : ''}</div>
+        </div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  document.getElementById('arrivedCount').textContent = arrivedCount;
+  document.getElementById('allDone').className = 'all-done' + (arrivedCount === buses.length ? ' visible' : '');
+}
+
+// =============================================================
+// CLOCK
+// =============================================================
+function updateTime() {
+  const now = new Date();
+  document.getElementById('timestamp').textContent =
+    now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Australia/Perth' }) +
+    ' \u2014 ' + now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Perth' });
+}
+updateTime();
+setInterval(updateTime, 30000);
+</script>
+
+</body>
+</html>
