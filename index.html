@@ -281,6 +281,73 @@
     color: #666;
     font-weight: 500;
   }
+
+  /* Role toggle */
+  .role-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    gap: 8px;
+  }
+
+  .role-btn {
+    flex: 1;
+    padding: 12px 10px;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: #f0f2f5;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .role-btn .role-icon {
+    font-size: 1.3rem;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .role-btn.active-spotter {
+    background: #fff3e0;
+    border-color: #e6953a;
+    color: #b36b00;
+  }
+
+  .role-btn.active-viewer {
+    background: #e3f2fd;
+    border-color: #5b9bd5;
+    color: #1565c0;
+  }
+
+  .role-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #999;
+    margin-bottom: 16px;
+    padding: 0 8px;
+  }
+
+  /* Viewer mode: disable interaction on bus items */
+  body.viewer-mode .bus-item {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  body.viewer-mode .bus-item:active {
+    transform: none;
+  }
+
+  body.viewer-mode .actions {
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -294,6 +361,16 @@
   <h1>🚌 Bus Duty Checklist</h1>
   <div class="subtitle">Sacred Heart College — After School (Live)</div>
 </div>
+
+<div class="role-bar">
+  <button class="role-btn active-spotter" id="btnSpotter" onclick="setRole('spotter')">
+    <span class="role-icon">👁️</span> Spotter
+  </button>
+  <button class="role-btn" id="btnViewer" onclick="setRole('viewer')">
+    <span class="role-icon">👥</span> Viewer
+  </button>
+</div>
+<div class="role-hint" id="roleHint">You can check off buses as they arrive.</div>
 
 <div class="status-bar">
   <div class="counter">
@@ -353,6 +430,29 @@ const buses = [
 ];
 
 let state = {};
+let currentRole = 'spotter';
+
+// =============================================================
+// ROLE TOGGLE
+// =============================================================
+function setRole(role) {
+  currentRole = role;
+  const btnSpotter = document.getElementById('btnSpotter');
+  const btnViewer = document.getElementById('btnViewer');
+  const hint = document.getElementById('roleHint');
+
+  if (role === 'spotter') {
+    btnSpotter.className = 'role-btn active-spotter';
+    btnViewer.className = 'role-btn';
+    document.body.classList.remove('viewer-mode');
+    hint.textContent = 'You can check off buses as they arrive.';
+  } else {
+    btnSpotter.className = 'role-btn';
+    btnViewer.className = 'role-btn active-viewer';
+    document.body.classList.add('viewer-mode');
+    hint.textContent = 'View only \u2014 updates will appear automatically.';
+  }
+}
 
 // =============================================================
 // AUTO-RESET: Get today's date in Perth time (AWST = UTC+8)
@@ -388,7 +488,7 @@ busRef.on('value', (snapshot) => {
   if (data.date !== getTodayPerth()) {
     const freshState = { date: getTodayPerth() };
     buses.forEach(b => {
-      freshState[b.id] = { arrived: false, time: null };
+      freshState[b.id] = { arrived: false, time: null, timestamp: null };
     });
     busRef.set(freshState);
     return; // The set() will re-trigger this listener with clean data
@@ -403,7 +503,7 @@ busRef.on('value', (snapshot) => {
 // TOGGLE & RESET
 // =============================================================
 function toggle(busId) {
-  const current = state[busId] || { arrived: false, time: null };
+  const current = state[busId] || { arrived: false, time: null, timestamp: null };
   const nowArrived = !current.arrived;
 
   if (nowArrived && navigator.vibrate) navigator.vibrate(30);
@@ -412,7 +512,8 @@ function toggle(busId) {
     arrived: nowArrived,
     time: nowArrived ? new Date().toLocaleTimeString('en-AU', {
       hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Perth'
-    }) : null
+    }) : null,
+    timestamp: nowArrived ? Date.now() : null
   });
 }
 
@@ -423,7 +524,7 @@ function resetAll() {
   if (confirm('Reset all buses? This will clear everyone\'s view.')) {
     const freshState = { date: getTodayPerth() };
     buses.forEach(b => {
-      freshState[b.id] = { arrived: false, time: null };
+      freshState[b.id] = { arrived: false, time: null, timestamp: null };
     });
     busRef.set(freshState);
   }
@@ -438,7 +539,20 @@ function render() {
 
   let arrivedCount = 0;
 
-  buses.forEach((bus) => {
+  // Sort: arrived buses first (most recent at top), then unarrived in original order
+  const sorted = buses.slice().sort((a, b) => {
+    const aState = state[a.id] || { arrived: false, timestamp: null };
+    const bState = state[b.id] || { arrived: false, timestamp: null };
+
+    if (aState.arrived && !bState.arrived) return -1;
+    if (!aState.arrived && bState.arrived) return 1;
+    if (aState.arrived && bState.arrived) {
+      return (bState.timestamp || 0) - (aState.timestamp || 0); // most recent first
+    }
+    return 0; // preserve original order for unarrived
+  });
+
+  sorted.forEach((bus) => {
     const busState = state[bus.id] || { arrived: false, time: null };
     if (busState.arrived) arrivedCount++;
 
