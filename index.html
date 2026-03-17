@@ -348,6 +348,145 @@
   body.viewer-mode .actions {
     display: none;
   }
+
+  /* Notification flash */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(76, 175, 80, 0.95);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .flash-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .flash-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .flash-route {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    background: rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 8px 32px;
+    margin-bottom: 12px;
+  }
+
+  .flash-dest {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 8px;
+  }
+
+  .flash-time {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .flash-dismiss {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* History section */
+  .history-toggle {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #7b2d26;
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .history-panel {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .history-panel.open {
+    display: block;
+  }
+
+  .history-day {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .history-day-header {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #7b2d26;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .history-bus-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.85rem;
+  }
+
+  .history-bus-name {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .history-bus-time {
+    color: #4caf50;
+    font-weight: 600;
+  }
+
+  .history-bus-time.missed {
+    color: #999;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .history-empty {
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+    padding: 24px 0;
+  }
+
+  .history-summary {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
 </style>
 </head>
 <body>
@@ -390,6 +529,19 @@
   <button class="btn btn-reset" onclick="resetAll()">Reset All</button>
 </div>
 
+<button class="history-toggle" id="historyToggle" onclick="toggleHistory()">📊 View Arrival History</button>
+
+<div class="history-panel" id="historyPanel"></div>
+
+<!-- Notification flash -->
+<div class="flash-overlay" id="flashOverlay" onclick="dismissFlash()">
+  <div class="flash-icon">🚌</div>
+  <div class="flash-route" id="flashRoute">—</div>
+  <div class="flash-dest" id="flashDest">—</div>
+  <div class="flash-time" id="flashTime">—</div>
+  <div class="flash-dismiss">Tap anywhere to dismiss</div>
+</div>
+
 <div class="timestamp" id="timestamp"></div>
 
 <!-- Firebase SDK -->
@@ -430,7 +582,11 @@ const buses = [
 ];
 
 let state = {};
+let previousState = {};
 let currentRole = 'spotter';
+let flashTimeout = null;
+let historyOpen = false;
+let isFirstLoad = true;
 
 // =============================================================
 // ROLE TOGGLE
@@ -495,6 +651,28 @@ busRef.on('value', (snapshot) => {
   }
 
   state = data;
+  
+  // Detect newly arrived buses (skip on first load)
+  if (!isFirstLoad) {
+    buses.forEach(bus => {
+      const prev = previousState[bus.id];
+      const curr = state[bus.id];
+      if (curr && curr.arrived && (!prev || !prev.arrived)) {
+        showFlash(bus, curr.time);
+        saveToHistory(bus, curr.time);
+      }
+    });
+  }
+  
+  // Store current state for next comparison
+  previousState = {};
+  buses.forEach(bus => {
+    if (state[bus.id]) {
+      previousState[bus.id] = { arrived: state[bus.id].arrived, time: state[bus.id].time };
+    }
+  });
+  isFirstLoad = false;
+
   render();
   document.getElementById('loadingOverlay').classList.add('hidden');
 });
@@ -578,6 +756,125 @@ function render() {
 
   document.getElementById('arrivedCount').textContent = arrivedCount;
   document.getElementById('allDone').className = 'all-done' + (arrivedCount === buses.length ? ' visible' : '');
+}
+
+// =============================================================
+// NOTIFICATION FLASH
+// =============================================================
+function showFlash(bus, timeStr) {
+  // Only show flash in viewer mode, or if phone is in pocket
+  // Show for both modes but especially prominent for viewer
+  const overlay = document.getElementById('flashOverlay');
+  document.getElementById('flashRoute').textContent = bus.route;
+  document.getElementById('flashDest').textContent = bus.dest;
+  document.getElementById('flashTime').textContent = timeStr ? 'Arrived at ' + timeStr : '';
+
+  overlay.classList.add('active');
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+  clearTimeout(flashTimeout);
+  flashTimeout = setTimeout(() => {
+    overlay.classList.remove('active');
+  }, 4000);
+}
+
+function dismissFlash() {
+  clearTimeout(flashTimeout);
+  document.getElementById('flashOverlay').classList.remove('active');
+}
+
+// =============================================================
+// HISTORY LOG
+// =============================================================
+const historyRef = db.ref('bus-duty-history');
+
+function saveToHistory(bus, timeStr) {
+  const today = getTodayPerth();
+  historyRef.child(today).child(bus.id).set({
+    route: bus.route,
+    dest: bus.dest,
+    time: timeStr,
+    timestamp: Date.now()
+  });
+}
+
+function toggleHistory() {
+  historyOpen = !historyOpen;
+  const panel = document.getElementById('historyPanel');
+  const btn = document.getElementById('historyToggle');
+
+  if (historyOpen) {
+    panel.classList.add('open');
+    btn.textContent = '📊 Hide Arrival History';
+    loadHistory();
+  } else {
+    panel.classList.remove('open');
+    btn.textContent = '📊 View Arrival History';
+  }
+}
+
+function loadHistory() {
+  const panel = document.getElementById('historyPanel');
+  panel.innerHTML = '<div class="history-empty">Loading...</div>';
+
+  historyRef.orderByKey().limitToLast(14).once('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      panel.innerHTML = '<div class="history-empty">No history recorded yet.</div>';
+      return;
+    }
+
+    // Sort dates newest first
+    const dates = Object.keys(data).sort().reverse();
+    let html = '';
+
+    dates.forEach(date => {
+      const dayData = data[date];
+      const dateObj = new Date(date + 'T00:00:00');
+      const dateLabel = dateObj.toLocaleDateString('en-AU', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      // Sort buses by timestamp
+      const dayBuses = Object.values(dayData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      const arrivedCount = dayBuses.length;
+
+      let firstTime = null;
+      let lastTime = null;
+
+      let rows = '';
+      // Show all buses — matched and unmatched
+      buses.forEach(bus => {
+        const record = dayData[bus.id];
+        if (record && record.time) {
+          rows += '<div class="history-bus-row">' +
+            '<span class="history-bus-name">' + record.route + ' \u2014 ' + record.dest + '</span>' +
+            '<span class="history-bus-time">' + record.time + '</span>' +
+            '</div>';
+          if (!firstTime) firstTime = record.time;
+          lastTime = record.time;
+        } else {
+          rows += '<div class="history-bus-row">' +
+            '<span class="history-bus-name">' + bus.route + ' \u2014 ' + bus.dest + '</span>' +
+            '<span class="history-bus-time missed">Not recorded</span>' +
+            '</div>';
+        }
+      });
+
+      let summary = arrivedCount + ' of ' + buses.length + ' buses recorded';
+      if (firstTime && lastTime && firstTime !== lastTime) {
+        summary += ' \u00B7 First: ' + firstTime + ' \u00B7 Last: ' + lastTime;
+      }
+
+      html += '<div class="history-day">' +
+        '<div class="history-day-header">' + dateLabel + '</div>' +
+        rows +
+        '<div class="history-summary">' + summary + '</div>' +
+        '</div>';
+    });
+
+    panel.innerHTML = html;
+  });
 }
 
 // =============================================================
