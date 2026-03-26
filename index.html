@@ -282,6 +282,108 @@
     font-weight: 500;
   }
 
+  /* Login screen */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f0f2f5;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-overlay.hidden {
+    display: none;
+  }
+
+  .login-box {
+    background: white;
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #7b2d26;
+    margin-bottom: 4px;
+  }
+
+  .login-subtitle {
+    font-size: 0.85rem;
+    color: #999;
+    margin-bottom: 28px;
+  }
+
+  .login-input {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #f0f2f5;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    color: #1a1a2e;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .login-input:focus {
+    border-color: #7b2d26;
+  }
+
+  .login-input::placeholder {
+    color: #aaa;
+  }
+
+  .login-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, #7b2d26, #a3362c);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(123, 45, 38, 0.3);
+  }
+
+  .login-btn:active {
+    transform: scale(0.97);
+  }
+
+  .login-error {
+    font-size: 0.85rem;
+    color: #c94040;
+    margin-top: 12px;
+    min-height: 20px;
+  }
+
+  .login-staff-note {
+    font-size: 0.75rem;
+    color: #bbb;
+    margin-top: 20px;
+  }
+
   /* Role toggle */
   .role-bar {
     background: white;
@@ -491,6 +593,19 @@
 </head>
 <body>
 
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🚌</div>
+    <div class="login-title">Bus Duty Checklist</div>
+    <div class="login-subtitle">Sacred Heart College — Staff Only</div>
+    <input type="text" class="login-input" id="loginUser" placeholder="Username" autocomplete="off" autocapitalize="off" />
+    <input type="password" class="login-input" id="loginPass" placeholder="Password" />
+    <button class="login-btn" onclick="attemptLogin()">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-staff-note">Contact Mr Clarke if you need login details.</div>
+  </div>
+</div>
+
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
   <div class="loading-text">Connecting...</div>
@@ -547,6 +662,55 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// =============================================================
+// LOGIN (credentials stored as SHA-256 hash — not visible in source)
+// =============================================================
+const VALID_HASH = 'c82bf85aa8a4d7cb6cf500d73fa767e3a76cbee440f765ec1bb3477526d41631';
+
+async function hashCredentials(user, pass) {
+  const data = new TextEncoder().encode(user.toLowerCase() + ':' + pass);
+  const buffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function checkLogin() {
+  if (sessionStorage.getItem('shc-bus-auth') === 'true' || localStorage.getItem('shc-bus-auth') === 'true') {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    return true;
+  }
+  return false;
+}
+
+async function attemptLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const error = document.getElementById('loginError');
+
+  const inputHash = await hashCredentials(user, pass);
+
+  if (inputHash === VALID_HASH) {
+    localStorage.setItem('shc-bus-auth', 'true');
+    document.getElementById('loginOverlay').classList.add('hidden');
+    error.textContent = '';
+  } else {
+    error.textContent = 'Incorrect username or password.';
+    document.getElementById('loginPass').value = '';
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('loginOverlay').classList.contains('hidden')) {
+    attemptLogin();
+  }
+});
+
+// Check on load
+checkLogin();
+</script>
 
 <script>
 // =============================================================
