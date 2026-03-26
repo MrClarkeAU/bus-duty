@@ -282,6 +282,108 @@
     font-weight: 500;
   }
 
+  /* Login screen */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f0f2f5;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-overlay.hidden {
+    display: none;
+  }
+
+  .login-box {
+    background: white;
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #7b2d26;
+    margin-bottom: 4px;
+  }
+
+  .login-subtitle {
+    font-size: 0.85rem;
+    color: #999;
+    margin-bottom: 28px;
+  }
+
+  .login-input {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #f0f2f5;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    color: #1a1a2e;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .login-input:focus {
+    border-color: #7b2d26;
+  }
+
+  .login-input::placeholder {
+    color: #aaa;
+  }
+
+  .login-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 8px;
+    background: linear-gradient(135deg, #7b2d26, #a3362c);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(123, 45, 38, 0.3);
+  }
+
+  .login-btn:active {
+    transform: scale(0.97);
+  }
+
+  .login-error {
+    font-size: 0.85rem;
+    color: #c94040;
+    margin-top: 12px;
+    min-height: 20px;
+  }
+
+  .login-staff-note {
+    font-size: 0.75rem;
+    color: #bbb;
+    margin-top: 20px;
+  }
+
   /* Role toggle */
   .role-bar {
     background: white;
@@ -348,9 +450,161 @@
   body.viewer-mode .actions {
     display: none;
   }
+
+  /* Notification flash */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(76, 175, 80, 0.95);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .flash-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .flash-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .flash-route {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    background: rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 8px 32px;
+    margin-bottom: 12px;
+  }
+
+  .flash-dest {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 8px;
+  }
+
+  .flash-time {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .flash-dismiss {
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* History section */
+  .history-toggle {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #7b2d26;
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .history-panel {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .history-panel.open {
+    display: block;
+  }
+
+  .history-day {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .history-day-header {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #7b2d26;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .history-bus-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.85rem;
+  }
+
+  .history-bus-name {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .history-bus-time {
+    color: #4caf50;
+    font-weight: 600;
+  }
+
+  .history-bus-time.missed {
+    color: #999;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .history-empty {
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+    padding: 24px 0;
+  }
+
+  .history-summary {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
 </style>
 </head>
 <body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🚌</div>
+    <div class="login-title">Bus Duty Checklist</div>
+    <div class="login-subtitle">Sacred Heart College — Staff Only</div>
+    <input type="text" class="login-input" id="loginUser" placeholder="Username" autocomplete="off" autocapitalize="off" />
+    <input type="password" class="login-input" id="loginPass" placeholder="Password" />
+    <button class="login-btn" onclick="attemptLogin()">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-staff-note">Contact Mr Clarke if you need login details.</div>
+  </div>
+</div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
@@ -390,11 +644,73 @@
   <button class="btn btn-reset" onclick="resetAll()">Reset All</button>
 </div>
 
+<button class="history-toggle" id="historyToggle" onclick="toggleHistory()">📊 View Arrival History</button>
+
+<div class="history-panel" id="historyPanel"></div>
+
+<!-- Notification flash -->
+<div class="flash-overlay" id="flashOverlay" onclick="dismissFlash()">
+  <div class="flash-icon">🚌</div>
+  <div class="flash-route" id="flashRoute">—</div>
+  <div class="flash-dest" id="flashDest">—</div>
+  <div class="flash-time" id="flashTime">—</div>
+  <div class="flash-dismiss">Tap anywhere to dismiss</div>
+</div>
+
 <div class="timestamp" id="timestamp"></div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// =============================================================
+// LOGIN (credentials stored as SHA-256 hash — not visible in source)
+// =============================================================
+const VALID_HASH = 'c82bf85aa8a4d7cb6cf500d73fa767e3a76cbee440f765ec1bb3477526d41631';
+
+async function hashCredentials(user, pass) {
+  const data = new TextEncoder().encode(user.toLowerCase() + ':' + pass);
+  const buffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function checkLogin() {
+  if (sessionStorage.getItem('shc-bus-auth') === 'true' || localStorage.getItem('shc-bus-auth') === 'true') {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    return true;
+  }
+  return false;
+}
+
+async function attemptLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const error = document.getElementById('loginError');
+
+  const inputHash = await hashCredentials(user, pass);
+
+  if (inputHash === VALID_HASH) {
+    localStorage.setItem('shc-bus-auth', 'true');
+    document.getElementById('loginOverlay').classList.add('hidden');
+    error.textContent = '';
+  } else {
+    error.textContent = 'Incorrect username or password.';
+    document.getElementById('loginPass').value = '';
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('loginOverlay').classList.contains('hidden')) {
+    attemptLogin();
+  }
+});
+
+// Check on load
+checkLogin();
+</script>
 
 <script>
 // =============================================================
@@ -430,7 +746,11 @@ const buses = [
 ];
 
 let state = {};
+let previousState = {};
 let currentRole = 'spotter';
+let flashTimeout = null;
+let historyOpen = false;
+let isFirstLoad = true;
 
 // =============================================================
 // ROLE TOGGLE
@@ -495,6 +815,28 @@ busRef.on('value', (snapshot) => {
   }
 
   state = data;
+  
+  // Detect newly arrived buses (skip on first load)
+  if (!isFirstLoad) {
+    buses.forEach(bus => {
+      const prev = previousState[bus.id];
+      const curr = state[bus.id];
+      if (curr && curr.arrived && (!prev || !prev.arrived)) {
+        showFlash(bus, curr.time);
+        saveToHistory(bus, curr.time);
+      }
+    });
+  }
+  
+  // Store current state for next comparison
+  previousState = {};
+  buses.forEach(bus => {
+    if (state[bus.id]) {
+      previousState[bus.id] = { arrived: state[bus.id].arrived, time: state[bus.id].time };
+    }
+  });
+  isFirstLoad = false;
+
   render();
   document.getElementById('loadingOverlay').classList.add('hidden');
 });
@@ -578,6 +920,125 @@ function render() {
 
   document.getElementById('arrivedCount').textContent = arrivedCount;
   document.getElementById('allDone').className = 'all-done' + (arrivedCount === buses.length ? ' visible' : '');
+}
+
+// =============================================================
+// NOTIFICATION FLASH
+// =============================================================
+function showFlash(bus, timeStr) {
+  // Only show flash in viewer mode, or if phone is in pocket
+  // Show for both modes but especially prominent for viewer
+  const overlay = document.getElementById('flashOverlay');
+  document.getElementById('flashRoute').textContent = bus.route;
+  document.getElementById('flashDest').textContent = bus.dest;
+  document.getElementById('flashTime').textContent = timeStr ? 'Arrived at ' + timeStr : '';
+
+  overlay.classList.add('active');
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+  clearTimeout(flashTimeout);
+  flashTimeout = setTimeout(() => {
+    overlay.classList.remove('active');
+  }, 4000);
+}
+
+function dismissFlash() {
+  clearTimeout(flashTimeout);
+  document.getElementById('flashOverlay').classList.remove('active');
+}
+
+// =============================================================
+// HISTORY LOG
+// =============================================================
+const historyRef = db.ref('bus-duty-history');
+
+function saveToHistory(bus, timeStr) {
+  const today = getTodayPerth();
+  historyRef.child(today).child(bus.id).set({
+    route: bus.route,
+    dest: bus.dest,
+    time: timeStr,
+    timestamp: Date.now()
+  });
+}
+
+function toggleHistory() {
+  historyOpen = !historyOpen;
+  const panel = document.getElementById('historyPanel');
+  const btn = document.getElementById('historyToggle');
+
+  if (historyOpen) {
+    panel.classList.add('open');
+    btn.textContent = '📊 Hide Arrival History';
+    loadHistory();
+  } else {
+    panel.classList.remove('open');
+    btn.textContent = '📊 View Arrival History';
+  }
+}
+
+function loadHistory() {
+  const panel = document.getElementById('historyPanel');
+  panel.innerHTML = '<div class="history-empty">Loading...</div>';
+
+  historyRef.orderByKey().limitToLast(14).once('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      panel.innerHTML = '<div class="history-empty">No history recorded yet.</div>';
+      return;
+    }
+
+    // Sort dates newest first
+    const dates = Object.keys(data).sort().reverse();
+    let html = '';
+
+    dates.forEach(date => {
+      const dayData = data[date];
+      const dateObj = new Date(date + 'T00:00:00');
+      const dateLabel = dateObj.toLocaleDateString('en-AU', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+
+      // Sort buses by timestamp
+      const dayBuses = Object.values(dayData).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      const arrivedCount = dayBuses.length;
+
+      let firstTime = null;
+      let lastTime = null;
+
+      let rows = '';
+      // Show all buses — matched and unmatched
+      buses.forEach(bus => {
+        const record = dayData[bus.id];
+        if (record && record.time) {
+          rows += '<div class="history-bus-row">' +
+            '<span class="history-bus-name">' + record.route + ' \u2014 ' + record.dest + '</span>' +
+            '<span class="history-bus-time">' + record.time + '</span>' +
+            '</div>';
+          if (!firstTime) firstTime = record.time;
+          lastTime = record.time;
+        } else {
+          rows += '<div class="history-bus-row">' +
+            '<span class="history-bus-name">' + bus.route + ' \u2014 ' + bus.dest + '</span>' +
+            '<span class="history-bus-time missed">Not recorded</span>' +
+            '</div>';
+        }
+      });
+
+      let summary = arrivedCount + ' of ' + buses.length + ' buses recorded';
+      if (firstTime && lastTime && firstTime !== lastTime) {
+        summary += ' \u00B7 First: ' + firstTime + ' \u00B7 Last: ' + lastTime;
+      }
+
+      html += '<div class="history-day">' +
+        '<div class="history-day-header">' + dateLabel + '</div>' +
+        rows +
+        '<div class="history-summary">' + summary + '</div>' +
+        '</div>';
+    });
+
+    panel.innerHTML = html;
+  });
 }
 
 // =============================================================
